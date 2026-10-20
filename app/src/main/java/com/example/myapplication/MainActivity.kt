@@ -211,6 +211,7 @@ private fun FrutisMonitorApp() {
 @Composable
 private fun HomeScreen(openAlerts: () -> Unit, openQuarters: () -> Unit, openDetail: () -> Unit, openSystem: () -> Unit) {
     val context = LocalContext.current
+    val userRole = UserSession.getUserRole(context)
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             Box(modifier = Modifier.fillMaxWidth().background(PrimaryGreen).padding(20.dp)) {
@@ -226,6 +227,7 @@ private fun HomeScreen(openAlerts: () -> Unit, openQuarters: () -> Unit, openDet
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
+                    val userName = remember { UserSession.getFullName(context) ?: "Usuario" }
                     Text("Buenos días, $userName", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     Text("Predio Buin · Última lectura hace 2 min", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(16.dp))
@@ -234,6 +236,50 @@ private fun HomeScreen(openAlerts: () -> Unit, openQuarters: () -> Unit, openDet
         }
         item {
             Column(modifier = Modifier.padding(16.dp)) {
+                // --- SECCIÓN SEGÚN ROL ---
+                when(userRole) {
+                    Rol.SUPERVISOR -> {
+                        Text("Alertas Prioritarias", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(colors = CardDefaults.cardColors(containerColor = CriticalRedBg), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = CriticalRed)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Riesgo de Helada - Cuartel Norte", fontWeight = FontWeight.Bold)
+                                    Text("Severidad: CRÍTICA", fontSize = 12.sp, color = CriticalRed)
+                                }
+                                Button(onClick = { Toast.makeText(context, "Funcionalidad segura: Acción registrada", Toast.LENGTH_SHORT).show() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                                    contentPadding = PaddingValues(horizontal = 8.dp)) {
+                                    Text("Registrar acción", fontSize = 11.sp, color = Color.White)
+                                }
+                            }
+                        }
+                    }
+                    Rol.TECNICO -> {
+                        Text("Salud de Infraestructura", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DeviceHealthItem("Sensores", "12/13 OK", Color(0xFF2ECC71), Modifier.weight(1f))
+                            DeviceHealthItem("Actuadores", "10/10 OK", Color(0xFF2ECC71), Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    Rol.ADMINISTRADOR -> {
+                        Text("Resumen Ejecutivo", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(colors = CardDefaults.cardColors(containerColor = LightGreenBg), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Estado General: Estable", fontWeight = FontWeight.Bold, color = PrimaryGreen)
+                                Text("Eficiencia Riego: 94%", fontSize = 13.sp)
+                                Text("Incidencias hoy: 2", fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    else -> { }
+                }
+
                 Card(
                     colors = CardDefaults.cardColors(containerColor = CardBackground),
                     shape = RoundedCornerShape(16.dp),
@@ -266,6 +312,19 @@ private fun HomeScreen(openAlerts: () -> Unit, openQuarters: () -> Unit, openDet
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     IndicatorCard(modifier = Modifier.weight(1f), icon = Icons.Default.FormatColorFill, iconBg = LightGreenBg, iconTint = PrimaryGreen, label = "Estanque", value = "78%", subtext = "124.800 L")
                     IndicatorCard(modifier = Modifier.weight(1f), icon = Icons.Default.WbSunny, iconBg = Color(0xFFFEF9E7), iconTint = Color(0xFFF39C12), label = "Radiación", value = "182", subtext = "W/m²")
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IndicatorCard(modifier = Modifier.weight(1f), icon = Icons.Default.Tsunami, iconBg = Color(0xFFE3F2FD), iconTint = Color(0xFF1976D2), label = "Caudal", value = "12 L/s", subtext = "Flujo estable")
+                    IndicatorCard(modifier = Modifier.weight(1f), icon = Icons.Default.Cloud, iconBg = Color(0xFFF5F5F5), iconTint = Color(0xFF616161), label = "Humedad Rel.", value = "45%", subtext = "Normal")
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text("Estado de Actuadores", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActuatorItem("Bomba Principal", true, Modifier.weight(1f))
+                    ActuatorItem("Electroválvulas", true, Modifier.weight(1f))
+                    ActuatorItem("Anti-Heladas", false, Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -301,6 +360,25 @@ private fun HomeScreen(openAlerts: () -> Unit, openQuarters: () -> Unit, openDet
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DeviceHealthItem(label: String, status: String, color: Color, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.clip(RoundedCornerShape(12.dp)).background(Color.White).border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp)).padding(12.dp)) {
+        Column {
+            Text(label, fontSize = 12.sp, color = TextSecondary)
+            Text(status, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = color)
+        }
+    }
+}
+
+@Composable
+private fun ActuatorItem(label: String, isActive: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.clip(RoundedCornerShape(12.dp)).background(Color.White).border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(if (isActive) Color(0xFF2ECC71) else CriticalRed))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(label, fontSize = 12.sp, color = TextPrimary)
     }
 }
 
@@ -620,7 +698,7 @@ private fun HistoryScreen() {
                                 // Forzamos refresco (en una app real usaríamos StateFlow o ViewModel)
                             }
                         },
-                        isAdmin = (userRole == "Administrador")
+                        isAdmin = (userRole == Rol.ADMINISTRADOR)
                     )
                 }
             }
@@ -655,7 +733,7 @@ private fun ProfileScreen(onLogout: () -> Unit) {
     var offlineEnabled by remember { mutableStateOf(true) }
     val context = LocalContext.current
     val userName = remember { UserSession.getFullName(context) ?: "Usuario" }
-    val userRole = remember { UserSession.getUserRole(context) ?: "Usuario" }
+    val userRole = remember { UserSession.getUserRole(context) }
     val initial = userName.firstOrNull()?.toString()?.uppercase() ?: "?"
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -669,7 +747,7 @@ private fun ProfileScreen(onLogout: () -> Unit) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(userName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(userRole, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                        Text(userRole.label, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                         Text("Predio Buin", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }

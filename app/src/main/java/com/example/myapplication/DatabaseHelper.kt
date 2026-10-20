@@ -57,20 +57,20 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     // --- MÉTODOS DE USUARIOS ---
 
-    fun registerUser(username: String, password: String, name: String, role: String): Long {
+    fun registerUser(username: String, passwordHash: String, name: String, role: String): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(USER_COLUMN_USERNAME, username)
-            put(USER_COLUMN_PASSWORD, password)
+            put(USER_COLUMN_PASSWORD, passwordHash)
             put(USER_COLUMN_NAME, name)
             put(USER_COLUMN_ROLE, role)
         }
         return db.insert(TABLE_USERS, null, values)
     }
 
-    fun checkUser(username: String, password: String): Int {
+    fun checkUser(username: String, passwordHash: String): Int {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT $USER_COLUMN_ID FROM $TABLE_USERS WHERE $USER_COLUMN_USERNAME=? AND $USER_COLUMN_PASSWORD=?", arrayOf(username, password))
+        val cursor = db.rawQuery("SELECT $USER_COLUMN_ID FROM $TABLE_USERS WHERE $USER_COLUMN_USERNAME=? AND $USER_COLUMN_PASSWORD=?", arrayOf(username, passwordHash))
 
         var userId = -1
         if (cursor.moveToFirst()) {

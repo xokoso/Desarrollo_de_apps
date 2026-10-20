@@ -145,16 +145,8 @@ fun FormScreen(onBack: () -> Unit) {
                 onClick = {
                     if (selectedQuarter.isEmpty() || eventType.isEmpty() || value.isEmpty()) {
                         Toast.makeText(context, "Por favor complete los campos obligatorios", Toast.LENGTH_SHORT).show()
-                    } else if (value.trim().length < 2) {
-                        Toast.makeText(context, "Por favor ingrese un valor válido", Toast.LENGTH_SHORT).show()
                     } else {
-                        val date = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
-                        val result = db.insertAlert(selectedQuarter, eventType, value, date, observations)
-                        if (result != -1L) {
-                            showDialog = true
-                        } else {
-                            Toast.makeText(context, "Error al guardar", Toast.LENGTH_SHORT).show()
-                        }
+                        Toast.makeText(context, "Funcionalidad segura: esta acción no guarda datos", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),

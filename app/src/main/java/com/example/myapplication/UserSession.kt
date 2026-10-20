@@ -3,8 +3,10 @@ package com.example.myapplication
 import android.content.Context
 import android.content.SharedPreferences
 
-enum class Rol {
-    ADMINISTRADOR, SUPERVISOR, TECNICO
+import java.security.MessageDigest
+
+enum class Rol(val label: String) {
+    ADMINISTRADOR("Administrador"), SUPERVISOR("Supervisor"), TECNICO("Técnico")
 }
 
 object UserSession {
@@ -16,6 +18,13 @@ object UserSession {
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun hashPassword(password: String): String {
+        val bytes = password.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+        return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 
     fun login(context: Context, userId: Int, username: String, role: String, fullName: String) {
@@ -32,12 +41,10 @@ object UserSession {
         getPrefs(context).edit().clear().apply()
     }
 
-    fun getUserId(context: Context): Int {
-        return getPrefs(context).getInt(KEY_USER_ID, -1)
-    }
+    fun getUserId(context: Context): Int = getPrefs(context).getInt(KEY_USER_ID, -1)
 
     fun getUserRole(context: Context): Rol {
-        val roleStr = getPrefs(context).getString(KEY_USER_ROLE, "TECNICO")
+        val roleStr = getPrefs(context).getString(KEY_USER_ROLE, "TECNICO") ?: "TECNICO"
         return try {
             Rol.valueOf(roleStr.uppercase())
         } catch (e: Exception) {
@@ -45,15 +52,7 @@ object UserSession {
         }
     }
 
-    fun getFullName(context: Context): String? {
-        return getPrefs(context).getString(KEY_USER_NAME, null)
-    }
-
-    fun getUsername(context: Context): String? {
-        return getPrefs(context).getString(KEY_USERNAME, null)
-    }
-
-    fun isLoggedIn(context: Context): Boolean {
-        return getUserId(context) != -1
-    }
+    fun getFullName(context: Context): String? = getPrefs(context).getString(KEY_USER_NAME, null)
+    fun getUsername(context: Context): String? = getPrefs(context).getString(KEY_USERNAME, null)
+    fun isLoggedIn(context: Context): Boolean = getUserId(context) != -1
 }

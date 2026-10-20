@@ -71,11 +71,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
                         if (username.isEmpty() || password.isEmpty()) {
                             Toast.makeText(context, "Complete todos los campos", Toast.LENGTH_SHORT).show()
                         } else {
-                            val userId = db.checkUser(username, password)
+                            val userId = db.checkUser(username, UserSession.hashPassword(password))
                             if (userId != -1) {
                                 val details = db.getUserDetails(userId)
-                                val role = details?.get("rol") ?: "Operario"
-                                val fullName = details?.get("nombre_completo") ?: "Usuario"
+                                val role = details?.get("rol") ?: "Técnico"
+                                val fullName = details?.get("nombre") ?: "Usuario"
                                 UserSession.login(context, userId, username, role, fullName)
                                 onLoginSuccess()
                             } else {
@@ -178,7 +178,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
                         if (username.isEmpty() || password.isEmpty() || fullName.isEmpty()) {
                             Toast.makeText(context, "Complete los campos obligatorios", Toast.LENGTH_SHORT).show()
                         } else {
-                            val result = db.registerUser(username, password, fullName, role)
+                            val hashedPassword = UserSession.hashPassword(password)
+                            val result = db.registerUser(username, hashedPassword, fullName, role)
                             if (result != -1L) {
                                 Toast.makeText(context, "Cuenta creada exitosamente", Toast.LENGTH_SHORT).show()
                                 onBackToLogin()
